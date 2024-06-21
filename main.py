@@ -92,6 +92,28 @@ def push_plus(title, content):
     except:
         print("pushplus推送异常")
 
+# wxpusher
+def wxpusher_send(title, content):
+    if not WP_APP_TOKEN or not WP_UIDS:
+        print("wxpusher服务的WP_APP_TOKEN或者WP_UIDS未设置!!\n取消推送")
+        return
+    print("wxpusher服务启动")
+    webapi = 'http://wxpusher.zjiecode.com/api/send/message'
+    uids = [];
+    for i in WP_UIDS.strip().split(','):
+        uids.append(i);
+    data = {
+        "appToken":WP_APP_TOKEN,
+        "content":content,
+        "summary":title,
+        "contentType":1,
+        "uids":uids
+        }
+    response = requests.post(url=webapi,json=data).json()
+    if response['code'] == 1000:
+        print('推送成功！')
+    else:
+        print('推送失败！')
 
 class MiMotionRunner:
     def __init__(self, _user, _passwd):
@@ -253,7 +275,27 @@ def push_to_push_plus(exec_results, summary):
                     html += f'<li><span>账号：{exec_result["user"]}</span>刷步数失败，失败原因：{exec_result["msg"]}</li>'
             html += '</ul>'
         push_plus(f"{format_now()} 刷步数通知", html)
-
+        
+def push_to_wx_pusher(exec_results, summary):
+    # 判断是否需要pushplus推送
+    if WP_APP_TOKEN is not None and WP_APP_TOKEN != '' and WP_APP_TOKEN != 'NO':
+        if PUSH_PLUS_HOUR is not None and PUSH_PLUS_HOUR.isdigit():
+            if time_bj.hour != int(PUSH_PLUS_HOUR):
+                print(f"当前设置push_plus推送整点为：{PUSH_PLUS_HOUR}, 当前整点为：{time_bj.hour}，跳过推送")
+                return
+        html = f'<div>{summary}</div>'
+        if len(exec_results) >= PUSH_PLUS_MAX:
+            html += '<div>账号数量过多，详细情况请前往github actions中查看</div>'
+        else:
+            html += '<ul>'
+            for exec_result in exec_results:
+                success = exec_result['success']
+                if success is not None and success is True:
+                    html += f'<li><span>账号：{exec_result["user"]}</span>刷步数成功，接口返回：{exec_result["msg"]}</li>'
+                else:
+                    html += f'<li><span>账号：{exec_result["user"]}</span>刷步数失败，失败原因：{exec_result["msg"]}</li>'
+            html += '</ul>'
+        wxpusher_send(f"{format_now()} 刷步数通知", html)
 
 def run_single_account(total, idx, user_mi, passwd_mi):
     idx_info = ""
@@ -323,6 +365,8 @@ if __name__ == "__main__":
             print("CONFIG格式不正确，请检查Secret配置，请严格按照JSON格式：使用双引号包裹字段和值，逗号不能多也不能少")
             traceback.print_exc()
             exit(1)
+        WP_APP_TOKEN = config.get('WP_APP_TOKEN')
+        WP_UIDS = config.get('WP_UIDS')
         PUSH_PLUS_TOKEN = config.get('PUSH_PLUS_TOKEN')
         PUSH_PLUS_HOUR = config.get('PUSH_PLUS_HOUR')
         PUSH_PLUS_MAX = get_int_value_default(config, 'PUSH_PLUS_MAX', 30)
