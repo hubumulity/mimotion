@@ -279,10 +279,6 @@ def push_to_push_plus(exec_results, summary):
 def push_to_wx_pusher(exec_results, summary):
     # 判断是否需要pushplus推送
     if WP_APP_TOKEN is not None and WP_APP_TOKEN != '' and WP_APP_TOKEN != 'NO':
-        if PUSH_PLUS_HOUR is not None and PUSH_PLUS_HOUR.isdigit():
-            if time_bj.hour != int(PUSH_PLUS_HOUR):
-                print(f"当前设置push_plus推送整点为：{PUSH_PLUS_HOUR}, 当前整点为：{time_bj.hour}，跳过推送")
-                return
         html = f'<div>{summary}</div>'
         if len(exec_results) >= PUSH_PLUS_MAX:
             html += '<div>账号数量过多，详细情况请前往github actions中查看</div>'
