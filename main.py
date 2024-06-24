@@ -287,7 +287,7 @@ def push_to_wx_pusher(exec_results, summary):
         else:
             html += f'<li><span>账号：{exec_result["user"]}</span>刷步数失败，失败原因：{exec_result["msg"]}</li>'
     html += '</ul>'
-    wxpusher_send(f"{format_now()} 刷步数通知", html)
+    wxpusher_send("刷步数通知", html)
 
 def run_single_account(total, idx, user_mi, passwd_mi):
     idx_info = ""
